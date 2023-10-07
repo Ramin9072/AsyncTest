@@ -1,19 +1,46 @@
-﻿internal class Program
+﻿using System.Diagnostics;
+using System.Linq.Expressions;
+
+internal class Program
 {
     private static void Main(string[] args)
     {
         Console.WriteLine("**** Start main ****");
 
-        ExecureTask();
+        //ExecureTask();
+
+        PLINQ();
 
         Console.WriteLine("**** END main ****");
         Console.ReadKey();
     }
 
+    /// P-LINQ power linq
+    private static void PLINQ()
+    {
+        var sourse = Enumerable.Range(100, 1000000);
+        var sw = new Stopwatch();
+
+        sw.Start();
+        var result = sourse.Where(x => x % 2 == 0).Select(s => s);
+        sw.Stop();
+        Console.WriteLine($"count => {result.Count()} -- MS => {sw.ElapsedMilliseconds}");
+
+        sw.Start();
+        var result1 = sourse.AsParallel()
+            .WithDegreeOfParallelism(2)
+            .AsOrdered()
+            .Where(x => x % 2 == 0).Select(s => s);
+        sw.Stop();
+        Console.WriteLine($"count => {result1.Count()} -- MS => {sw.ElapsedMilliseconds}");
+    }
+
+    /// P-LINQ
     public static async Task ExecureTask()
     {
-        //RunSyncMasoud();
+        var result = RunASyncMasoud();
 
+        return;
         var i = MethodAsync();
         var i2 = MethodAsyncLongTimer();
 
@@ -37,7 +64,7 @@
         return i;
     }
 
-    public static async Task RunSyncMasoud()
+    public static async Task<Task> RunASyncMasoud()
     {
         int i = 0, j = 0;
         var task1 = Task.Run(() =>
@@ -52,20 +79,14 @@
         {
             for (j = 0; j < 10; j++)
             {
-                Console.WriteLine($" MethodAsync => {j.ToString()}");
-                Task.Delay(1000).Wait();
+                Console.WriteLine($" MethodLongAsync => {j.ToString()}");
+                Task.Delay(2000).Wait();
             }
         });
-        var result = Task.WhenAll(task1, task2);
-        if (result.IsCompleted)
-        {
-            Console.WriteLine("SOME SYNC");
 
-            await Console.Out.WriteLineAsync($" ------------ MethodAsync {i} ------------");
-            await Console.Out.WriteLineAsync($"------------  MethodAsync2 {j} ------------");
-        }
+        return Task.WhenAll(task1, task2);
+
     }
-
 
     public static async Task<int> MethodAsyncLongTimer()
     {
@@ -93,7 +114,6 @@
         return i;
     }
 
-
     public static async Task<List<Person>> Task1()
     {
         Thread.Sleep(5000);
@@ -106,7 +126,6 @@
         }
         return perspnList.ToList();
     }
-
 
     public static async void Operation()
     {
