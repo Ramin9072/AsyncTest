@@ -1,18 +1,51 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq.Expressions;
 
 internal class Program
 {
+
+    static ConcurrentDictionary<string, int> _concorentDictunary;
+
     private static void Main(string[] args)
     {
         Console.WriteLine("**** Start main ****");
 
         //ExecureTask();
+        //PLINQ();
+        //ConcurentDictuonary();
 
-        PLINQ();
+        var ConcurrentQueue = new ConcurrentQueue<int>();
+        ConcurrentQueue.Enqueue(10);
+        ConcurrentQueue.Enqueue(20);
+
+        Console.WriteLine($"Current qeue {string.Join("" , ConcurrentQueue.ToArray())}");
+        if (ConcurrentQueue.TryPeek(out int resultPeek))
+        {
+            Console.WriteLine(resultPeek.ToString());
+        }
+
+
 
         Console.WriteLine("**** END main ****");
         Console.ReadKey();
+    }
+
+    private static void ConcurentDictuonary()
+    {
+        var task1 = Task.Run(() => WriteToDictonary());
+        var task2 = Task.Run(() => WriteToDictonary());
+        Task.WaitAll(task1, task2);
+
+        Console.WriteLine($"AVG  {_concorentDictunary.Values.Average()}");
+    }
+
+    private static void WriteToDictonary()
+    {
+        for (int i = 0; i < 999; i++)
+        {
+            _concorentDictunary.TryAdd(i.ToString(), i);
+        }
     }
 
     /// P-LINQ power linq
@@ -29,13 +62,12 @@ internal class Program
         sw.Start();
         var result1 = sourse.AsParallel()
             .WithDegreeOfParallelism(2)
-            .AsOrdered()
+            .AsOrdered() // SORT
             .Where(x => x % 2 == 0).Select(s => s);
         sw.Stop();
         Console.WriteLine($"count => {result1.Count()} -- MS => {sw.ElapsedMilliseconds}");
     }
 
-    /// P-LINQ
     public static async Task ExecureTask()
     {
         var result = RunASyncMasoud();
